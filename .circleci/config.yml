@@ -16,7 +16,7 @@ jobs:
     steps:
       - setup_remote_docker
       - run: |
-          sudo apt-get update && sudo apt install --no-recommends -y qemu
+          sudo apt-get update && sudo apt install --no-install-recommends -y qemu
           mkdir -p ~/.docker/cli-plugins
           curl -L \
             --output ~/.docker/cli-plugins/docker-buildx \
