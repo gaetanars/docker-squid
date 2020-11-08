@@ -8,15 +8,38 @@ jobs:
   #         password: $DOCKERHUB_PASSWORD
   #   steps:
   #     - run: curl -s https://api.launchpad.net/1.0/ubuntu/+archive/primary\?ws.op\=getPublishedBinaries\&pocket\=Release\&binary_name\=squid\&exact_match\=true\&ordered_by_date\=true | jq '.entries|.[0].source_package_version'
+  build-test:
+    environment:
+      IMAGE_NAME: zenman94/squid
+    docker:
+      - image: cimg/base
+    steps:
+      - setup_remote_docker
+      - run: |
+          apt-get update && apt install --no-recommends -y qemu
+          mkdir -p ~/.docker/cli-plugins
+          curl -L \
+            --output ~/.docker/cli-plugins/docker-buildx \
+            "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.linux-amd64"
+          chmod a+x ~/.docker/cli-plugins/docker-buildx    
+      - checkout
+      - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+      - run: |
+          docker buildx build --push \
+            --platform linux/arm64/v8,linux/amd64 \
+            --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
   build:
     environment:
       IMAGE_NAME: zenman94/squid
     docker:
-      - image: jdrouet/docker-with-buildx:stable
+      - image: cimg/base
     steps:
+      - run: |
+          curl -L \
+          --output /usr/lib/docker/cli-plugins/docker-buildx \
+          "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.linux-amd64"
       - checkout
-      - setup_remote_docker:
-          version: 18.09.3
+      - setup_remote_docker
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - run: |
           docker buildx build --push \
@@ -25,6 +48,12 @@ jobs:
 
 workflows:
   version: 2
+  build-test:
+    jobs:
+      - build-test:
+          filters:
+            branches:
+              only: master
   build-image:
     jobs:
       - build:
