@@ -1,13 +1,12 @@
-FROM ubuntu:groovy
+FROM ubuntu:rolling
 
-ENV SQUID_VERSION=4.13 \
-    PKG_RELEASE=1ubuntu2
+ENV SQUID_VERSION=4.13-1ubuntu2
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-        squid=${SQUID_VERSION}-${PKG_RELEASE} \
+        squid=${SQUID_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /entrypoint.sh

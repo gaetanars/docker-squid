@@ -1,0 +1,35 @@
+version: 2.1
+jobs:
+  # check_squid_release:
+  #   docker:
+  #     - image: cimg/base
+  #       auth:
+  #         username: mydockerhub-user
+  #         password: $DOCKERHUB_PASSWORD
+  #   steps:
+  #     - run: curl -s https://api.launchpad.net/1.0/ubuntu/+archive/primary\?ws.op\=getPublishedBinaries\&pocket\=Release\&binary_name\=squid\&exact_match\=true\&ordered_by_date\=true | jq '.entries|.[0].source_package_version'
+  build:
+    environment:
+      IMAGE_NAME: zenman94/squid
+    docker:
+      - image: jdrouet/docker-with-buildx:stable
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 18.09.3
+      - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+      - run: |
+          docker buildx build --push\
+            --platform linux/arm/v7,linux/arm64/v8,linux/amd64,linux/386,linux/ppc64le,linux/s390x \
+            --tag $IMAGE_NAME:latest $IMAGE_NAME:$CIRCLE_TAG .
+
+workflows:
+  version: 2
+  build-image:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
