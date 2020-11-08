@@ -35,10 +35,8 @@ jobs:
             docker buildx install
             # Run binfmt
             docker run --rm --privileged tonistiigi/binfmt:latest --install "$BUILDX_PLATFORMS"
-      - run: |
-          docker buildx build --push \
-            --platform $BUILDX_PLATFORMS \
-            --tag $IMAGE_NAME:latest .
+      - run: docker buildx build --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest .
+      - run: docker push $IMAGE_NAME:latest
   build:
     environment:
       IMAGE_NAME: zenman94/squid
