@@ -2,16 +2,17 @@
 set -e
 
 
-mkdir -p ${SQUID_LOG_DIR}
-chmod -R 755 ${SQUID_LOG_DIR}
-chown -R ${SQUID_USER}:${SQUID_USER} ${SQUID_LOG_DIR}
-chown --dereference ${SQUID_USER} "/proc/$$/fd/1" "/proc/$$/fd/2" || :
-ln -sf /dev/stdout ${SQUID_LOG_DIR}/access.log
+mkdir -p /var/log/squid
+chmod -R 755 /var/log/squid
+chown -R proxy:proxy /var/log/squid
+chown --dereference proxy "/proc/$$/fd/1" "/proc/$$/fd/2" || :
+ln -sf /dev/stdout /var/log/squid/access.log
+ln -sf /dev/stderr /var/log/squid/cache.log
 
-mkdir -p ${SQUID_CACHE_DIR}
-chown -R ${SQUID_USER}:${SQUID_USER} ${SQUID_CACHE_DIR}
+mkdir -p /var/spool/squid
+chown -R proxy:proxy /var/spool/squid
 
-if [[ ! -d ${SQUID_CACHE_DIR}/00 ]]; then
+if [[ ! -d /var/spool/squid/00 ]]; then
   echo "Initializing cache..."
   $(which squid) -N -f /etc/squid/squid.conf -z
 fi
