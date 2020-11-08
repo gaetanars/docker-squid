@@ -11,23 +11,34 @@ jobs:
   build-test:
     environment:
       IMAGE_NAME: zenman94/squid
-    docker:
-      - image: cimg/base:stable-20.04
+      DOCKER_BUILDKIT: 1
+      BUILDX_PLATFORMS: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/386,linux/arm/v7,linux/arm/v6
+    machine:
+      image: ubuntu-2004:202010-01
     steps:
-      - setup_remote_docker
-      - run: |
-          sudo apt-get update && sudo apt install --no-install-recommends -y qemu
-          mkdir -p ~/.docker/cli-plugins
-          curl -L \
-            --output ~/.docker/cli-plugins/docker-buildx \
-            "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.linux-amd64"
-          chmod a+x ~/.docker/cli-plugins/docker-buildx    
       - checkout
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+      - run:
+          name: Install buildx
+          command: |
+            BUILDX_BINARY_URL="https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64"
+
+            curl --output docker-buildx \
+              --silent --show-error --location --fail --retry 3 \
+              "$BUILDX_BINARY_URL"
+
+            mkdir -p ~/.docker/cli-plugins
+
+            mv docker-buildx ~/.docker/cli-plugins/
+            chmod a+x ~/.docker/cli-plugins/docker-buildx
+
+            docker buildx install
+            # Run binfmt
+            docker run --rm --privileged tonistiigi/binfmt:latest --install "$BUILDX_PLATFORMS"
       - run: |
           docker buildx build --push \
-            --platform linux/arm64/v8,linux/amd64 \
-            --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
+            --platform $BUILDX_PLATFORMS \
+            --tag $IMAGE_NAME:latest .
   build:
     environment:
       IMAGE_NAME: zenman94/squid
