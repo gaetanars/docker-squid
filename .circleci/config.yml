@@ -37,7 +37,7 @@ jobs:
             docker run --rm --privileged tonistiigi/binfmt:latest --install "$BUILDX_PLATFORMS"
       - run: |
           docker buildx create --name mybuilder --use
-          docker buildx build --push --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
+          docker buildx build --build-arg SQUID_VERSION=$CIRCLE_TAG --push --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
 
 workflows:
   version: 2
