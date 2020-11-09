@@ -1,13 +1,21 @@
 version: 2.1
 jobs:
-  # check_squid_release:
-  #   docker:
-  #     - image: cimg/base
-  #       auth:
-  #         username: mydockerhub-user
-  #         password: $DOCKERHUB_PASSWORD
-  #   steps:
-  #     - run: curl -s https://api.launchpad.net/1.0/ubuntu/+archive/primary\?ws.op\=getPublishedBinaries\&pocket\=Release\&binary_name\=squid\&exact_match\=true\&ordered_by_date\=true | jq '.entries|.[0].source_package_version'
+  check_squid_release:
+    docker:
+      - image: cimg/base
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    steps:
+      - checkout
+      - run: SQUID_VERSION=`curl -s "https://api.launchpad.net/1.0/ubuntu/+archive/primary?ws.op=getPublishedBinaries&pocket=Release&binary_name=squid&exact_match=true&ordered_by_date=true" | jq -r '.entries|.[0].source_package_version'
+      - run: |
+          if git rev-list $SQUID_VERSION >/dev/null
+          then
+            echo "Version déjà releasée"
+          else
+            echo "Version non-releasé"
+          fi
   build:
     environment:
       IMAGE_NAME: zenman94/squid
@@ -49,3 +57,11 @@ workflows:
               only: /.*/
             branches:
               ignore: /.*/
+  new-release:
+    jobs:
+      - check_squid_release:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: master
