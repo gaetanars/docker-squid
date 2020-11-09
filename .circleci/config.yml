@@ -15,6 +15,8 @@ jobs:
             echo "Version déjà releasée"
           else
             echo "Version non-releasé"
+            LAST_COMMIT= git rev-parse HEAD
+            curl -X POST -H "Content-Type: application/json" -H "Authorization: token ${GITHUB_TOKEN}" --data '{"ref": "refs/tags/$SQUID_VERSION","sha": "$LAST_COMMIT"}' https://api.github.com/repos/gaetanars/docker-squid/git/refs
           fi
   build:
     environment:
@@ -57,11 +59,14 @@ workflows:
               only: /.*/
             branches:
               ignore: /.*/
-  new-release:
+  check-new-release:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+            filters:
+              branches:
+                only:
+                  - master
     jobs:
-      - check_squid_release:
-          filters:
-            tags:
-              ignore: /.*/
-            branches:
-              only: master
+      - check_squid_release
+
