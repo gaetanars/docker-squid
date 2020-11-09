@@ -1,4 +1,4 @@
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/automated/zenman94/squid) ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/zenman94/squid)
+[![CircleCi](https://circleci.com/gh/gaetanars/docker-squid.svg?style=shield)](https://circleci.com/gh/gaetanars/docker-squid)
 
 # Quickstart
 ```bash

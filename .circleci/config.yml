@@ -48,12 +48,25 @@ jobs:
       - run: |
           docker buildx create --name mybuilder --use
           docker buildx build --build-arg SQUID_VERSION=$CIRCLE_TAG --push --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.13
+    steps:
+      - run: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION}
 
 workflows:
   version: 2
   build-image:
     jobs:
       - build:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
+  github-release:
+    jobs:
+      - publish-github-release:
           filters:
             tags:
               only: /.*/
