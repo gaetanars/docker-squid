@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   check_squid_release:
     docker:
-      - image: cimg/base
+      - image: cimg/base:2020.11-20.04
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
