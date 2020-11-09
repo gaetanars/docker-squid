@@ -52,7 +52,7 @@ jobs:
     docker:
       - image: cibuilds/github:0.13
     steps:
-      - run: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION}
+      - run: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c master -n ${CIRCLE_TAG} -b "Ubuntu Rolling\nSquid ${CIRCLE_TAG}" ${$CIRCLE_TAG}
 
 workflows:
   version: 2
