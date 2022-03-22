@@ -8,16 +8,18 @@ jobs:
           password: $DOCKER_PASSWORD
     steps:
       - checkout
-      - run: SQUID_VERSION=`curl -s "https://api.launchpad.net/1.0/ubuntu/+archive/primary?ws.op=getPublishedBinaries&pocket=Release&binary_name=squid&exact_match=true&ordered_by_date=true" | jq -r '.entries|.[0].source_package_version'`
-      - run: |
-          if git rev-parse $SQUID_VERSION >/dev/null
-          then
-            echo "Version déjà releasée"
-          else
-            echo "Version non-releasé"
-            LAST_COMMIT= git rev-parse HEAD
-            curl -X POST -H "Content-Type: application/json" -H "Authorization: token ${GITHUB_TOKEN}" --data '{"ref": "refs/tags/$SQUID_VERSION","sha": "$LAST_COMMIT"}' https://api.github.com/repos/gaetanars/docker-squid/git/refs
-          fi
+      - run:
+          name: Check latest Squid release
+          command: |
+            SQUID_VERSION=`curl -s "https://api.launchpad.net/1.0/ubuntu/+archive/primary?ws.op=getPublishedBinaries&pocket=Release&binary_name=squid&exact_match=true&ordered_by_date=true" | jq -r '.entries|.[0].source_package_version'`
+            if git rev-parse $SQUID_VERSION >/dev/null
+            then
+              echo "Version déjà releasée"
+            else
+              echo "Version non-releasé"
+              LAST_COMMIT= git rev-parse HEAD
+              curl -X POST -H "Content-Type: application/json" -H "Authorization: token ${GITHUB_TOKEN}" --data '{"ref": "refs/tags/$SQUID_VERSION","sha": "$LAST_COMMIT"}' https://api.github.com/repos/gaetanars/docker-squid/git/refs
+            fi
   build:
     environment:
       IMAGE_NAME: zenman94/squid
