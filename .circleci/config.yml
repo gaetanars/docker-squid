@@ -8,8 +8,6 @@ jobs:
     machine:
       image: cimg/base:stable
     steps:
-      - setup_remote_docker:
-          version: 20.10.11
       - checkout
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - run: docker buildx build --build-arg SQUID_VERSION=$CIRCLE_TAG --push --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
