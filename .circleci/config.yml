@@ -1,61 +1,18 @@
 version: 2.1
 jobs:
-  check_squid_release:
-    docker:
-      - image: cimg/base:2020.11-20.04
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-    steps:
-      - checkout
-      - run:
-          name: Check latest Squid release
-          command: |
-            SQUID_VERSION=`curl -s "https://api.launchpad.net/1.0/ubuntu/+archive/primary?ws.op=getPublishedBinaries&pocket=Release&binary_name=squid&exact_match=true&ordered_by_date=true" | jq -r '.entries|.[0].source_package_version'`
-            if git rev-parse $SQUID_VERSION >/dev/null
-            then
-              echo "Version déjà releasée"
-            else
-              echo "Version non-releasé"
-              LAST_COMMIT= git rev-parse HEAD
-              curl -X POST -H "Content-Type: application/json" -H "Authorization: token ${GITHUB_TOKEN}" --data '{"ref": "refs/tags/$SQUID_VERSION","sha": "$LAST_COMMIT"}' https://api.github.com/repos/gaetanars/docker-squid/git/refs
-            fi
   build:
     environment:
       IMAGE_NAME: zenman94/squid
       DOCKER_BUILDKIT: 1
       BUILDX_PLATFORMS: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/arm/v7
     machine:
-      image: ubuntu-2004:202010-01
+      image: cimg/base:stable
     steps:
+      - setup_remote_docker:
+          version: 20.10.11
       - checkout
       - run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-      - run:
-          name: Install buildx
-          command: |
-            BUILDX_BINARY_URL="https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-amd64"
-
-            curl --output docker-buildx \
-              --silent --show-error --location --fail --retry 3 \
-              "$BUILDX_BINARY_URL"
-
-            mkdir -p ~/.docker/cli-plugins
-
-            mv docker-buildx ~/.docker/cli-plugins/
-            chmod a+x ~/.docker/cli-plugins/docker-buildx
-
-            docker buildx install
-            # Run binfmt
-            docker run --rm --privileged tonistiigi/binfmt:latest --install "$BUILDX_PLATFORMS"
-      - run: |
-          docker buildx create --name mybuilder --use
-          docker buildx build --build-arg SQUID_VERSION=$CIRCLE_TAG --push --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
-  publish-github-release:
-    docker:
-      - image: cibuilds/github:0.13
-    steps:
-      - run: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c master -n ${CIRCLE_TAG} -b "Ubuntu Rolling\nSquid ${CIRCLE_TAG}" ${$CIRCLE_TAG}
-
+      - run: docker buildx build --build-arg SQUID_VERSION=$CIRCLE_TAG --push --platform $BUILDX_PLATFORMS --tag $IMAGE_NAME:latest --tag $IMAGE_NAME:$CIRCLE_TAG .
 workflows:
   version: 2
   build-image:
@@ -66,22 +23,4 @@ workflows:
               only: /.*/
             branches:
               ignore: /.*/
-  github-release:
-    jobs:
-      - publish-github-release:
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore: /.*/
-  check-new-release:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - check_squid_release
 

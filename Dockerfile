@@ -1,6 +1,6 @@
 FROM ubuntu:rolling
 
-ARG SQUID_VERSION=4.13-1ubuntu2.1
+ARG SQUID_VERSION=4.13-10ubuntu5
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
